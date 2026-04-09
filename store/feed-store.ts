@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Post } from '@type/Post';
-import { getFeed } from '@/api/content';
+import { getFeed, likePost, unlikePost } from '@/api/content';
 
 interface FeedState {
     posts: Post[];
@@ -58,17 +58,43 @@ export const useFeedStore = create<FeedState>((set, get) => ({
 
     toggleLike: async (postId: string) => {
         const { posts } = get();
+        const target = posts.find(p => p.id === postId);
+        if (!target) return;
+
+        const wasLiked = target.liked ?? false;
+        const nextLiked = !wasLiked;
+
         set({
             posts: posts.map(p =>
                 p.id === postId
                     ? {
                           ...p,
-                          liked: !(p.liked ?? false),
-                          likes: p.liked ? p.likes - 1 : p.likes + 1,
+                          liked: nextLiked,
+                          likes: wasLiked ? p.likes - 1 : p.likes + 1,
                       }
                     : p,
             ),
         });
+
+        try {
+            if (wasLiked) {
+                await unlikePost(postId);
+            } else {
+                await likePost(postId);
+            }
+        } catch {
+            set({
+                posts: get().posts.map(p =>
+                    p.id === postId
+                        ? {
+                              ...p,
+                              liked: wasLiked,
+                              likes: wasLiked ? p.likes + 1 : p.likes - 1,
+                          }
+                        : p,
+                ),
+            });
+        }
     },
 
     removePost: () => {},
