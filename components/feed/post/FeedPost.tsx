@@ -11,19 +11,34 @@ import { useFeedStore } from '@/store/feed-store';
 
 function FeedPost({ post }: { post: Post }) {
     const user = post.author;
-    const { posts } = useFeedStore();
+    const { posts, toggleLike } = useFeedStore();
 
     if (!user) return null;
+
+    // TODO: 최신 liked 상태 가져오기 (실습 3-6)
+    const latestPost = posts.find(item => item.id === post.id);
+    const liked = latestPost?.liked ?? post.liked ?? false;
+
+    // TODO: handleDoubleTap 작성 (실습 3-7)
+    const handleDoubleTap = () => {
+        if (!liked) {
+            toggleLike(post.id);
+        }
+    };
 
     return (
         <ThemedView style={styles.feedMargin}>
             <FeedPostHeader user={user} />
-            <FeedImage image={resolveImageSource(post.images[0])} />
+            {/* TODO: onDoubleTap 연결 (실습 3-8) */}
+            <FeedImage
+                image={resolveImageSource(post.images[0])}
+                onDoubleTap={handleDoubleTap}
+            />
             <ContentContainer style={{ gap: 4 }}>
                 <FeedPostActions
                     postId={post.id}
-                    initialLikes={posts.find(item => item.id === post.id)?.likes ?? post.likes}
-                    initialLiked={posts.find(item => item.id === post.id)?.liked ?? post.liked}
+                    initialLikes={post.likes}
+                    initialLiked={post.liked}
                     commentCount={post.commentCount ?? post.comments.length}
                 />
                 <FeedPostCaption
