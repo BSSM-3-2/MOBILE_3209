@@ -97,5 +97,9 @@ export const useFeedStore = create<FeedState>((set, get) => ({
         }
     },
 
-    removePost: () => {},
+    removePost: (postId: string) => {
+        set({
+            posts: get().posts.filter(post => post.id !== postId),
+        });
+    },
 }));
