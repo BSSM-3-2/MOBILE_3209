@@ -5,6 +5,7 @@ import { getMe } from '@/api/users';
 // TODO 실습 1: expo-secure-store를 import하세요
 import * as SecureStore from 'expo-secure-store';
 // TODO 실습 4: api/auth에서 logout을 import하세요
+import { logout } from '@/api/auth';
 // TODO 실습 5: api/auth에서 refreshToken을 import하세요
 
 const TOKEN_KEY = 'accessToken';
@@ -120,6 +121,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     logOut: async () => {
         // TODO 실습 4-1: get().refreshToken으로 서버에 폐기 요청 (실패해도 계속 진행)
+        try {
+            await logout(get().refreshToken ?? '');
+        } catch {
+            /* 서버 폐기 실패해도 로컬 로그아웃은 계속 진행 */
+        }
         // TODO 실습 1-3: SecureStore에서 TOKEN_KEY, REFRESH_KEY를 삭제하세요
         await SecureStore.deleteItemAsync(TOKEN_KEY);
         await SecureStore.deleteItemAsync(REFRESH_KEY);
