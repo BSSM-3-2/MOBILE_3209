@@ -5,6 +5,12 @@ const BASE_URL: string =
     (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
     'https://bssm-api.zer0base.me';
 
+let isRefreshing = false;
+let pendingQueue: Array<{
+    resolve: (token: string) => void;
+    reject: (err: unknown) => void;
+}> = [];
+
 const apiClient = axios.create({
     baseURL: BASE_URL,
     headers: {
@@ -49,8 +55,30 @@ apiClient.interceptors.response.use(
             //   - isRefreshing 플래그로 중복 갱신 방지
             //   - 갱신 중 들어온 요청은 pendingQueue에 쌓아두었다가 완료 후 일괄 처리
             //   - 갱신 실패 시 store.logOut() 호출
+            if (isRefreshing) {
+                return new Promise<string>((resolve, reject) => {
+                    pendingQueue.push({ resolve, reject });
+                }).then(token => {
+                    error.config.headers.Authorization = `Bearer ${token}`;
+                    return apiClient(error.config);
+                });
+            }
 
-            return Promise.reject(error);
+            isRefreshing = true;
+            try {
+                const newToken = await store.refreshAccessToken();
+                pendingQueue.forEach(({ resolve }) => resolve(newToken));
+                pendingQueue = [];
+                error.config.headers.Authorization = `Bearer ${newToken}`;
+                return apiClient(error.config);
+            } catch {
+                pendingQueue.forEach(({ reject }) => reject(error));
+                pendingQueue = [];
+                await store.logOut();
+                return Promise.reject(error);
+            } finally {
+                isRefreshing = false;
+            }
         }
 
         console.error('[API] 서버 에러:', status, error.message);
