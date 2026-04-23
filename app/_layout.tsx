@@ -63,7 +63,7 @@ function AuthGuard() {
 
 export default function RootLayout() {
     const {
-        /* TODO 실습 3: bootstrap을 꺼내세요 */
+        bootstrap, /* TODO 실습 3: bootstrap을 꺼내세요 */
     } = useAuthStore();
     const colorScheme = useColorScheme();
     const [loaded] = useFonts({
@@ -75,6 +75,9 @@ export default function RootLayout() {
     });
 
     // TODO 실습 3: 앱 시작 시 bootstrap()을 한 번 호출하세요 (의존성 배열 [])
+    useEffect(() => {
+        bootstrap();
+    }, []);
 
     useEffect(() => {
         if (loaded) SplashScreen.hideAsync();
